@@ -25,7 +25,7 @@ if __name__ == "__main__":
         # use the info decoded
         for i in decoded:
             dat = i.data.decode("utf-8")
-
+            
             # send only one signal
             if lastScan != dat:
                 lastScan = dat

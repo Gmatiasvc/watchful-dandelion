@@ -1,7 +1,7 @@
 drop table data;
 
 create table data (
-	record_hash VARCHAR(256) PRIMARY KEY,
-    created_at BIGINT NOT NULL,
-    updated_at BIGINT NOT NULL
+	id_hash VARCHAR(256) PRIMARY KEY,
+    time_entry BIGINT NOT NULL,
+    time_exit BIGINT NOT NULL
 )
