@@ -13,4 +13,7 @@ def generate(str1 :str, str2: str , str3:str ) -> str:
         return "NULL"
 
 if __name__ == "__main__":
-    print(generate("Gerardo","Venegas","60529950"))
+    print(generate("Jean","Bernilla","99999999"))
+    print(generate("Andre","Rebaza","99999999"))
+    print(generate("Camila","Zevallos","99999999"))
+    print(generate("Angela","Roldan","99999999"))

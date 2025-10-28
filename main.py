@@ -27,6 +27,17 @@ if __name__ == "__main__":
         for i in decoded:
             dat = i.data.decode("utf-8")
 
+            cv2.putText(
+                frame,  # type: ignore
+                str(dat),
+                (15, 25),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 0, 255),
+                2,
+            )
+
+
             # send only one signal
             if lastScan != dat:
                 lastScan = dat
