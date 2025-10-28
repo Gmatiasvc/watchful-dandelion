@@ -66,7 +66,7 @@ if __name__ == "__main__":
                 dt = datetime.fromtimestamp(r[1])
                 cv2.putText(
                     frame,  # type: ignore
-                    str(f"Entrada registrada\n{dt.strftime("%Y-%m-%d %H:%M:%S")}"),
+                    str(f"Entrada registrada {dt.strftime("%Y-%m-%d %H:%M:%S")}"),
                     (x- 15, y + h + 25),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 dt = datetime.fromtimestamp(r[1])
                 cv2.putText(
                     frame,  # type: ignore
-                    str(f"Salida registrada\n{dt.strftime("%Y-%m-%d %H:%M:%S")}"),
+                    str(f"Salida registrada  {dt.strftime("%Y-%m-%d %H:%M:%S")}"),
                     (x- 15, y + h + 25),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.6,
