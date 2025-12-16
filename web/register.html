@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Pase QR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row">
+        
+        <!-- Sección del Formulario -->
+        <div class="w-full md:w-1/2 p-8">
+            <div class="mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Registro de Asistencia</h1>
+                <p class="text-gray-500 text-sm mt-1">Ingresa los datos para generar el código QR de acceso.</p>
+            </div>
+
+            <!-- Mensajes de Django -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="mb-4 p-3 rounded-lg text-sm {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" class="space-y-4">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div>
+                    <label class="block text-gray-700 text-sm font-bold mb-2" for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p class="text-red-500 text-xs italic mt-1">{{ field.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center gap-2">
+                    <i class="fas fa-qrcode"></i> Registrar y Generar QR
+                </button>
+            </form>
+        </div>
+
+        <!-- Sección de Resultado (QR) -->
+        <div class="w-full md:w-1/2 bg-gray-50 p-8 flex flex-col items-center justify-center border-l border-gray-200">
+            {% if qr_image %}
+                <div class="text-center">
+                    <div class="bg-white p-4 rounded-xl shadow-lg inline-block mb-4">
+                        <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado" class="w-64 h-64">
+                    </div>
+                    
+                    <h2 class="text-xl font-bold text-gray-800">{{ nombre }}</h2>
+                    <p class="text-xs text-gray-400 font-mono mt-1 mb-6 break-all max-w-xs mx-auto">{{ hash_id }}</p>
+
+                    <a href="data:image/png;base64,{{ qr_image }}" download="QR_{{ nombre }}.png" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-medium transition duration-300 shadow-md">
+                        <i class="fas fa-download mr-2"></i> Descargar QR
+                    </a>
+                </div>
+            {% else %}
+                <div class="text-center text-gray-400">
+                    <i class="fas fa-id-card text-6xl mb-4 opacity-30"></i>
+                    <p>El código QR aparecerá aquí<br>después de registrar los datos.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+</body>
+</html>
