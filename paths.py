@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from url import views
 
 urlpatterns = [
     # Vista para registrar personas (la que ya tenías)
