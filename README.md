@@ -96,11 +96,6 @@ python main.py
 2.  **Escaneo 2:** Si `time_entry` existe y `time_exit` es 0 -> Registra **Salida**.
 3.  **Escaneo 3+:** Si ambos existen -> Muestra "Salida ya registrada" (Ciclo completado).
 
----
-
-## ⚠️ Notas Importantes
-* **Seguridad:** En producción, cambia la `SECRET_KEY` en `settings.py` y desactiva `DEBUG = True`.
-* **Cámara Web:** Para que el escáner web funcione en dispositivos móviles externos (no localhost), necesitas servir la aplicación a través de **HTTPS** (debido a políticas de seguridad de los navegadores).
 
 ---
 
