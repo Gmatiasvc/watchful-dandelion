@@ -4,13 +4,15 @@ import io
 import base64
 import time
 import json
+import pytz # type: ignore
 from datetime import datetime
+from django.conf import settings
 from django.shortcuts import render
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
-# Importaciones locales (asegúrate de que forms.py y models.py estén en la carpeta core)
+# Importaciones locales
 from .forms import RegistroPersonaForm
 from .models import Asistencia
 
@@ -21,11 +23,18 @@ from .models import Asistencia
 def generar_hash(nombre, apellido, documento):
     """
     Genera un hash SHA256 único basado en los datos del usuario.
-    Replica la lógica original de tu script qr_generator.py
     """
     to_hash = f"{nombre}{apellido}{documento}"
     hashed = hashlib.sha256(to_hash.encode()).hexdigest()
     return hashed
+
+def obtener_hora_local(timestamp):
+    """
+    Convierte un timestamp Unix a la zona horaria configurada en settings.
+    """
+    dt_utc = datetime.utcfromtimestamp(timestamp).replace(tzinfo=pytz.utc)
+    tz_local = pytz.timezone(settings.TIME_ZONE)
+    return dt_utc.astimezone(tz_local).strftime("%Y-%m-%d %H:%M:%S")
 
 # -------------------------------------------------------------------------
 # Vistas (Views)
@@ -36,8 +45,8 @@ def registro_view(request):
     Maneja el formulario de registro:
     1. Recibe datos (Nombre, Apellido, DNI).
     2. Genera el hash.
-    3. Guarda en base de datos si no existe.
-    4. Genera el código QR en memoria y lo muestra en la web.
+    3. Guarda datos legibles y hash en BD.
+    4. Genera el código QR visual.
     """
     qr_image_base64 = None
     hash_generado = None
@@ -53,12 +62,25 @@ def registro_view(request):
             # 1. Generar Hash
             hash_id = generar_hash(nombre, apellido, documento)
             
-            # 2. Guardar en BD (get_or_create evita duplicados)
-            # time_entry y time_exit se inicializan en 0 según tu esquema SQL
+            # 2. Guardar en BD
+            # MEJORA: Ahora guardamos también los datos personales para reportes
             obj, created = Asistencia.objects.get_or_create(
                 id_hash=hash_id,
-                defaults={'time_entry': 0, 'time_exit': 0}
+                defaults={
+                    'time_entry': 0, 
+                    'time_exit': 0,
+                    'nombre': nombre,
+                    'apellido': apellido,
+                    'documento': documento
+                }
             )
+
+            # Si ya existía pero no tenía los datos personales (registros antiguos), los actualizamos
+            if not created and (not obj.nombre or not obj.documento):
+                obj.nombre = nombre
+                obj.apellido = apellido
+                obj.documento = documento
+                obj.save()
 
             if created:
                 messages.success(request, 'Usuario registrado exitosamente en la base de datos.')
@@ -77,7 +99,6 @@ def registro_view(request):
 
             img = qr.make_image(fill_color="black", back_color="white")
             
-            # Guardar imagen en buffer de memoria (no en disco) para mostrarla en HTML
             buffer = io.BytesIO()
             img.save(buffer, format="PNG") # type: ignore
             qr_image_base64 = base64.b64encode(buffer.getvalue()).decode()
@@ -96,9 +117,6 @@ def registro_view(request):
     })
 
 def lector_view(request):
-    """
-    Simplemente renderiza la plantilla HTML que contiene el lector de cámara (JavaScript).
-    """
     return render(request, 'core/lector.html')
 
 # -------------------------------------------------------------------------
@@ -109,7 +127,6 @@ def lector_view(request):
 def procesar_qr(request):
     """
     API que recibe una petición POST con el JSON {'hash_id': '...'}.
-    Ejecuta la lógica de Entrada/Salida similar a database.py -> entryAction.
     """
     if request.method == 'POST':
         try:
@@ -130,9 +147,14 @@ def procesar_qr(request):
             except Asistencia.DoesNotExist:
                 return JsonResponse({'status': 'not_found', 'message': 'Usuario no encontrado en base de datos'}, status=404)
 
+            # MEJORA: Usar nombre real si está disponible
+            nombre_usuario = registro.nombre if registro.nombre else "Usuario"
+
             # 3. Lógica de Negocio (Entrada vs Salida)
             ts_ahora = int(time.time()) # Timestamp Unix actual
-            dt_ahora = datetime.fromtimestamp(ts_ahora).strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Formatear hora usando la Timezone configurada
+            hora_legible = obtener_hora_local(ts_ahora)
 
             # Caso A: No tiene entrada registrada -> Registrar Entrada
             if registro.time_entry == 0:
@@ -141,7 +163,7 @@ def procesar_qr(request):
                 return JsonResponse({
                     'status': 'success', 
                     'type': 'entrada', 
-                    'message': f'Entrada registrada: {dt_ahora}'
+                    'message': f'¡Bienvenido/a, {nombre_usuario}!\nEntrada: {hora_legible}'
                 })
             
             # Caso B: Ya tiene entrada, pero no salida -> Registrar Salida
@@ -151,7 +173,7 @@ def procesar_qr(request):
                 return JsonResponse({
                     'status': 'success', 
                     'type': 'salida', 
-                    'message': f'Salida registrada: {dt_ahora}'
+                    'message': f'¡Hasta luego, {nombre_usuario}!\nSalida: {hora_legible}'
                 })
             
             # Caso C: Ya tiene ambas -> Informar que ya completó
@@ -159,12 +181,10 @@ def procesar_qr(request):
                 return JsonResponse({
                     'status': 'info', 
                     'type': 'completado', 
-                    'message': 'El ciclo de asistencia (entrada/salida) ya fue completado.'
+                    'message': f'{nombre_usuario}, tu ciclo de asistencia ya fue completado hoy.'
                 })
 
         except Exception as e:
-            # Captura cualquier otro error inesperado
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
-    # Si no es POST
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)

@@ -3,8 +3,13 @@ import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-cambia-esto-en-produccion'
-DEBUG = True
+# MEJORA DE SEGURIDAD: Uso de variables de entorno
+# En producción, asegúrate de configurar 'DJANGO_SECRET_KEY' y 'DJANGO_DEBUG' en tu servidor.
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-this-in-prod')
+
+# DEBUG será True solo si la variable de entorno no dice explícitamente 'False'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+
 ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
@@ -55,7 +60,10 @@ DATABASES = {
 }
 
 LANGUAGE_CODE = 'es-es'
-TIME_ZONE = 'UTC'
+
+# MEJORA: Timezone configurado a zona local (ej. Perú)
+TIME_ZONE = 'America/Lima'
+
 USE_I18N = True
 USE_TZ = True
 

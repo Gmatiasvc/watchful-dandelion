@@ -5,7 +5,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    # Cambia 'asistencia_qr.settings' por el nombre de tu carpeta de configuración si es distinto
+
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'asistencia_qr.settings')
     try:
         from django.core.management import execute_from_command_line

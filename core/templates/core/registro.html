@@ -6,6 +6,33 @@
     <title>Generador de Pase QR</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Estilos específicos para impresión */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printable-area, #printable-area * {
+                visibility: visible;
+            }
+            #printable-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border: none !important;
+                background: white !important;
+            }
+            /* Ocultar botones dentro del área imprimible */
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
@@ -46,22 +73,36 @@
                     <i class="fas fa-qrcode"></i> Registrar y Generar QR
                 </button>
             </form>
+            
+            <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+                <a href="{% url 'lector' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <i class="fas fa-camera mr-1"></i> Ir al Escáner
+                </a>
+            </div>
         </div>
 
-        <!-- Sección de Resultado (QR) -->
-        <div class="w-full md:w-1/2 bg-gray-50 p-8 flex flex-col items-center justify-center border-l border-gray-200">
+        <!-- Sección de Resultado (QR) - ID añadido para impresión -->
+        <div id="printable-area" class="w-full md:w-1/2 bg-gray-50 p-8 flex flex-col items-center justify-center border-l border-gray-200">
             {% if qr_image %}
-                <div class="text-center">
-                    <div class="bg-white p-4 rounded-xl shadow-lg inline-block mb-4">
-                        <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado" class="w-64 h-64">
+                <div class="text-center w-full max-w-sm border-2 border-dashed border-gray-300 p-6 rounded-xl bg-white">
+                    <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-2">Pase de Acceso</div>
+                    
+                    <div class="bg-white p-2 rounded-lg inline-block mb-4">
+                        <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado" class="w-48 h-48 mx-auto">
                     </div>
                     
-                    <h2 class="text-xl font-bold text-gray-800">{{ nombre }}</h2>
-                    <p class="text-xs text-gray-400 font-mono mt-1 mb-6 break-all max-w-xs mx-auto">{{ hash_id }}</p>
-
-                    <a href="data:image/png;base64,{{ qr_image }}" download="QR_{{ nombre }}.png" class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-full font-medium transition duration-300 shadow-md">
-                        <i class="fas fa-download mr-2"></i> Descargar QR
-                    </a>
+                    <h2 class="text-2xl font-bold text-gray-800 leading-tight">{{ nombre }}</h2>
+                    <p class="text-sm text-gray-500 mt-1">ID: {{ hash_id|slice:":8" }}...</p>
+                    
+                    <div class="mt-6 space-y-3 no-print">
+                        <a href="data:image/png;base64,{{ qr_image }}" download="QR_{{ nombre }}.png" class="block w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition duration-300 shadow-sm text-sm">
+                            <i class="fas fa-download mr-2"></i> Guardar Imagen
+                        </a>
+                        
+                        <button onclick="window.print()" class="block w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium transition duration-300 shadow-sm text-sm">
+                            <i class="fas fa-print mr-2"></i> Imprimir Pase
+                        </button>
+                    </div>
                 </div>
             {% else %}
                 <div class="text-center text-gray-400">
