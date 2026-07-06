@@ -1,57 +1,77 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escáner de Asistencia</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Librería para leer QR en web -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <style>
-        /* Animación para el escaneo exitoso */
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
-            70% { box-shadow: 0 0 0 20px rgba(74, 222, 128, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
-        }
-        .scan-success {
-            animation: pulse-green 0.8s;
-            border-color: #4ade80 !important;
-        }
-        .scan-error {
-            border-color: #ef4444 !important;
-        }
-        
-        /* Transiciones para la lista */
-        .history-item {
-            transition: all 0.5s ease-out;
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        .history-item.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    </style>
-</head>
-<body class="bg-gray-900 min-h-screen flex flex-col items-center p-4">
+{% extends 'core/base.html' %}
 
-    <!-- Header -->
-    <div class="w-full max-w-md flex justify-between items-center mb-6 text-white">
-        <h1 class="text-xl font-bold"><i class="fas fa-camera mr-2"></i>Escáner QR</h1>
-        <div class="flex gap-4">
-            <button id="toggle-sound" class="text-gray-400 hover:text-white" title="Activar/Desactivar Sonido">
+{% block title %}Escáner de Asistencia - Asistencia QR{% endblock %}
+
+{% block extra_head %}
+<!-- Librería para leer QR en web -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<style>
+    /* Animación para el escaneo exitoso */
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+        70% { box-shadow: 0 0 0 20px rgba(74, 222, 128, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+    }
+    .scan-success {
+        animation: pulse-green 0.8s;
+        border-color: #4ade80 !important;
+    }
+    .scan-error {
+        border-color: #ef4444 !important;
+    }
+
+    /* Transiciones para la lista */
+    .history-item {
+        transition: all 0.5s ease-out;
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    .history-item.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Sobrescribir estilos del lector */
+    #reader {
+        border: none !important;
+    }
+    #reader img {
+        display: none !important;
+    }
+    #reader button {
+        background-color: #4f46e5;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        margin-top: 1rem;
+    }
+    #reader button:hover {
+        background-color: #4338ca;
+    }
+    #reader__dashboard_section_csr span {
+        color: #374151;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-6xl mx-auto flex flex-col lg:flex-row gap-8">
+
+    <!-- Columna Izquierda: Escáner -->
+    <div class="flex-1 flex flex-col items-center">
+        <!-- Header -->
+        <div class="w-full max-w-md flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800"><i class="fas fa-camera text-indigo-600 mr-2"></i>Escáner Web</h1>
+            <button id="toggle-sound" class="text-gray-500 hover:text-indigo-600 bg-white shadow rounded-full w-10 h-10 flex items-center justify-center transition">
                 <i class="fas fa-volume-up"></i>
             </button>
-            <a href="{% url 'registro' %}" class="text-gray-400 hover:text-white text-sm">
-                Registro <i class="fas fa-arrow-right ml-1"></i>
-            </a>
         </div>
-    </div>
 
-    <!-- Contenedor del Escáner -->
-    <div class="w-full max-w-md bg-black rounded-2xl overflow-hidden shadow-2xl border-4 border-gray-800 relative transition-colors duration-300" id="reader-container">
+        <!-- Contenedor del Escáner -->
+        <div id="reader-container" class="w-full max-w-md bg-white p-4 rounded-2xl shadow-lg border-4 border-transparent transition-all duration-300 relative overflow-hidden">
         <div id="reader" class="w-full h-80 bg-gray-800"></div>
         
         <!-- Overlay visual de guía -->
@@ -306,5 +326,5 @@
         // Fix de estilo al cargar
         document.getElementById('reader').style.background = "transparent";
     </script>
-</body>
-</html>
+</div>
+{% endblock %}

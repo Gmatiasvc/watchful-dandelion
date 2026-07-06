@@ -1,42 +1,39 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Generador de Pase QR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        /* Estilos específicos para impresión */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #printable-area, #printable-area * {
-                visibility: visible;
-            }
-            #printable-area {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                border: none !important;
-                background: white !important;
-            }
-            /* Ocultar botones dentro del área imprimible */
-            .no-print {
-                display: none !important;
-            }
-        }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+{% extends 'core/base.html' %}
 
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row">
+{% block title %}Registro de Asistencia - Asistencia QR{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Estilos específicos para impresión */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #printable-area, #printable-area * {
+            visibility: visible;
+        }
+        #printable-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+            background: white !important;
+        }
+        /* Ocultar botones dentro del área imprimible */
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-8">
         
         <!-- Sección del Formulario -->
         <div class="w-full md:w-1/2 p-8">
@@ -84,34 +81,34 @@
         <!-- Sección de Resultado (QR) - ID añadido para impresión -->
         <div id="printable-area" class="w-full md:w-1/2 bg-gray-50 p-8 flex flex-col items-center justify-center border-l border-gray-200">
             {% if qr_image %}
-                <div class="text-center w-full max-w-sm border-2 border-dashed border-gray-300 p-6 rounded-xl bg-white">
+                <div class="text-center w-full max-w-sm border-2 border-dashed border-gray-300 p-6 rounded-xl bg-white transform transition duration-500 hover:scale-105 hover:shadow-2xl">
                     <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-2">Pase de Acceso</div>
                     
-                    <div class="bg-white p-2 rounded-lg inline-block mb-4">
+                    <div class="bg-white p-2 rounded-lg inline-block mb-4 shadow-sm border border-gray-100">
                         <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado" class="w-48 h-48 mx-auto">
                     </div>
                     
                     <h2 class="text-2xl font-bold text-gray-800 leading-tight">{{ nombre }}</h2>
-                    <p class="text-sm text-gray-500 mt-1">ID: {{ hash_id|slice:":8" }}...</p>
+                    <p class="text-sm text-gray-500 mt-1 font-mono">ID: {{ hash_id|slice:":8" }}...</p>
                     
-                    <div class="mt-6 space-y-3 no-print">
-                        <a href="data:image/png;base64,{{ qr_image }}" download="QR_{{ nombre }}.png" class="block w-full bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition duration-300 shadow-sm text-sm">
-                            <i class="fas fa-download mr-2"></i> Guardar Imagen
+                    <div class="mt-6 space-y-3 no-print flex flex-col gap-2">
+                        <a href="data:image/png;base64,{{ qr_image }}" download="QR_{{ nombre }}.png" class="flex-1 w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2">
+                            <i class="fas fa-download"></i> Guardar Imagen
                         </a>
                         
-                        <button onclick="window.print()" class="block w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-2 rounded-lg font-medium transition duration-300 shadow-sm text-sm">
-                            <i class="fas fa-print mr-2"></i> Imprimir Pase
+                        <button onclick="window.print()" class="flex-1 w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2">
+                            <i class="fas fa-print"></i> Imprimir Pase
                         </button>
                     </div>
                 </div>
             {% else %}
                 <div class="text-center text-gray-400">
-                    <i class="fas fa-id-card text-6xl mb-4 opacity-30"></i>
-                    <p>El código QR aparecerá aquí<br>después de registrar los datos.</p>
+                    <div class="w-24 h-24 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-qrcode text-4xl text-gray-400"></i>
+                    </div>
+                    <p class="text-lg">El código QR aparecerá aquí<br>después de registrar los datos.</p>
                 </div>
             {% endif %}
         </div>
     </div>
-
-</body>
-</html>
+{% endblock %}
