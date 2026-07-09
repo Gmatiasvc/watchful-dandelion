@@ -3,3 +3,5 @@ __pycache__
 out/*
 out
 latest.jpg
+sql/create_table.sql
+data.sqlite
