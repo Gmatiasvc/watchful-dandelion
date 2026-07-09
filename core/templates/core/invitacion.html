@@ -1,0 +1,287 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Invitación - Asistencia QR{% endblock %}
+
+{% block extra_head %}
+<!-- html2pdf.js via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- html2canvas for image download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+    /* Estilos personalizados para la invitación */
+    #invitation-card {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        /* Fondo gradiente por defecto, puede ser editado o cambiado por una imagen */
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+        text-align: center;
+        padding: 40px 20px;
+        color: #333;
+    }
+
+    .invitation-header {
+        margin-bottom: 30px;
+    }
+
+    .invitation-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: #fff;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .invitation-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .guest-name {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+
+    .qr-container {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        display: inline-block;
+        margin: 20px 0;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 10;
+    }
+
+    .qr-image {
+        width: 250px; /* QR grande en el centro */
+        height: 250px;
+        position: relative;
+        z-index: 10;
+        display: block;
+    }
+
+    .invitation-footer {
+        margin-top: 30px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+        word-break: break-all;
+    }
+
+    /* Gráficos decorativos */
+    .decor-1, .decor-2 {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .decor-1 {
+        width: 150px;
+        height: 150px;
+        top: -50px;
+        left: -50px;
+    }
+    .decor-2 {
+        width: 200px;
+        height: 200px;
+        bottom: -80px;
+        right: -80px;
+    }
+
+    /* Edit controls (some styling handled by tailwind classes) */
+    .edit-controls {
+        margin-bottom: 20px;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #invitation-container, #invitation-container * {
+            visibility: visible;
+        }
+        #invitation-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-4xl flex flex-col my-8 gap-6">
+
+    <!-- Controles de Edición Básicos -->
+    <div class="edit-controls bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 no-print w-full max-w-[600px] mx-auto flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Color de fondo:</label>
+            <input type="color" id="bgColor1" value="#f6d365" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
+            <input type="color" id="bgColor2" value="#fda085" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Color de texto:</label>
+            <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
+        </div>
+
+        <div class="flex items-center gap-2 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
+            <button onclick="descargarImagen()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center">
+                <i class="fas fa-image"></i> Descargar como Imagen
+            </button>
+            <button onclick="generarPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Tarjeta de Invitación a Imprimir/Descargar -->
+    <div id="invitation-container" class="w-full flex justify-center">
+        <div id="invitation-card">
+            <div class="decor-1"></div>
+            <div class="decor-2"></div>
+
+            <div class="invitation-header">
+                <h1 id="invText1" class="invitation-title editable-text" contenteditable="true">¡Estás Invitado!</h1>
+                <p id="invText2" class="invitation-subtitle editable-text" contenteditable="true">Nos emociona contar con tu presencia.</p>
+            </div>
+
+            <div id="invText4" class="guest-name editable-text" contenteditable="true">
+                {{ nombre_completo }}
+            </div>
+
+            <div class="qr-container">
+                <!-- img converted from base64 -->
+                <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR" class="qr-image mx-auto">
+            </div>
+
+            <div class="invitation-footer editable-text">
+                <p id="invText3" contenteditable="true">Presenta este código QR en la entrada.</p>
+                <p>ID: {{ hash_id }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-sm text-gray-500 mt-4 no-print">
+        <p><i class="fas fa-info-circle"></i> Puedes hacer clic en los textos de la invitación para editarlos antes de descargar.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Elementos
+    const bgColor1Input = document.getElementById('bgColor1');
+    const bgColor2Input = document.getElementById('bgColor2');
+    const textColorInput = document.getElementById('textColor');
+    const card = document.getElementById('invitation-card');
+    const t1 = document.getElementById('invText1');
+    const t2 = document.getElementById('invText2');
+    const t3 = document.getElementById('invText3');
+
+    const t4 = document.getElementById('invText4');
+
+    // Cargar configuraciones guardadas
+    function loadConfig() {
+        const saved = JSON.parse(localStorage.getItem('invitationConfig'));
+        if (saved) {
+            if (saved.bg1) bgColor1Input.value = saved.bg1;
+            if (saved.bg2) bgColor2Input.value = saved.bg2;
+            if (saved.text) textColorInput.value = saved.text;
+            if (saved.t1) t1.innerText = saved.t1;
+            if (saved.t2) t2.innerText = saved.t2;
+            if (saved.t3) t3.innerText = saved.t3;
+            if (saved.t4) t4.innerText = saved.t4;
+        }
+        applyConfig();
+    }
+
+    function applyConfig() {
+        const c1 = bgColor1Input.value;
+        const c2 = bgColor2Input.value;
+        card.style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+
+        const color = textColorInput.value;
+        document.querySelectorAll('.editable-text').forEach(el => {
+            el.style.color = color;
+        });
+    }
+
+    function saveConfig() {
+        const config = {
+            bg1: bgColor1Input.value,
+            bg2: bgColor2Input.value,
+            text: textColorInput.value,
+            t1: t1.innerText,
+            t2: t2.innerText,
+            t3: t3.innerText,
+            t4: t4.innerText
+        };
+        localStorage.setItem('invitationConfig', JSON.stringify(config));
+    }
+
+    bgColor1Input.addEventListener('input', () => { applyConfig(); saveConfig(); });
+    bgColor2Input.addEventListener('input', () => { applyConfig(); saveConfig(); });
+    textColorInput.addEventListener('input', () => { applyConfig(); saveConfig(); });
+
+    [t1, t2, t3, t4].forEach(el => {
+        el.addEventListener('input', saveConfig);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadConfig();
+        if (window.location.search.includes('print=true')) {
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+    });
+
+    // Generación del PDF
+    function generarPDF() {
+        const element = document.getElementById('invitation-card');
+
+        // Configuraciones de html2pdf
+        const opt = {
+            margin:       0,
+            filename:     'Invitacion_{{ nombre_completo|slugify }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Generar y descargar el PDF
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // Generación de Imagen
+    function descargarImagen() {
+        const element = document.getElementById('invitation-card');
+
+        html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: null
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'Invitacion_{{ nombre_completo|slugify }}.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+    }
+</script>
+{% endblock %}
