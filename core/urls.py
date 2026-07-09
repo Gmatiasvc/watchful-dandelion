@@ -11,6 +11,12 @@ urlpatterns = [
     # Ruta del lector: Muestra la interfaz de la cámara
     path('lector/', views.lector_view, name='lector'),
     
+    # Ruta de estadísticas
+    path('estadisticas/', views.estadisticas_view, name='estadisticas'),
+
+    # Ruta para limpiar la DB
+    path('limpiar-db/', views.limpiar_db, name='limpiar_db'),
+
     # API: Procesa la petición asíncrona del escáner
     path('api/procesar-qr/', views.procesar_qr, name='procesar_qr'),
 ]

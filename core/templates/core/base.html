@@ -5,28 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Asistencia QR{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: '#1a202c',
+                            card: '#2d3748',
+                            text: '#e2e8f0',
+                            border: '#4a5568'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        // Check local storage for theme preference or system preference
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col text-gray-800 font-sans">
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen flex flex-col text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
 
     <!-- Navigation Bar -->
-    <nav class="bg-white shadow-md w-full z-10 no-print">
+    <nav class="bg-white dark:bg-gray-800 shadow-md w-full z-10 no-print transition-colors duration-300 border-b border-gray-200 dark:border-gray-700">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <a href="{% url 'index' %}" class="flex-shrink-0 flex items-center gap-2 text-indigo-600 hover:text-indigo-800 transition">
+                    <a href="{% url 'index' %}" class="flex-shrink-0 flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition">
                         <i class="fas fa-qrcode text-2xl"></i>
                         <span class="font-bold text-xl tracking-tight">AsistenciaQR</span>
                     </a>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <a href="{% url 'registro' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition duration-150">
-                        <i class="fas fa-user-plus mr-1"></i> Registro
+                <div class="flex items-center space-x-2 md:space-x-4">
+                    <a href="{% url 'registro' %}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 md:px-3 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-user-plus mr-1"></i> <span class="hidden md:inline">Registro</span>
                     </a>
-                    <a href="{% url 'lector' %}" class="text-gray-600 hover:text-indigo-600 px-3 py-2 rounded-md text-sm font-medium transition duration-150">
-                        <i class="fas fa-camera mr-1"></i> Escáner
+                    <a href="{% url 'lector' %}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 md:px-3 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-camera mr-1"></i> <span class="hidden md:inline">Escáner</span>
                     </a>
+                    <a href="{% url 'estadisticas' %}" class="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 px-2 md:px-3 py-2 rounded-md text-sm font-medium transition duration-150">
+                        <i class="fas fa-chart-pie mr-1"></i> <span class="hidden md:inline">Estadísticas</span>
+                    </a>
+                    <!-- Theme Toggle Button -->
+                    <button id="theme-toggle" type="button" class="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 rounded-lg text-sm p-2.5 transition duration-150">
+                        <i id="theme-toggle-dark-icon" class="hidden fas fa-moon"></i>
+                        <i id="theme-toggle-light-icon" class="hidden fas fa-sun"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -39,14 +72,56 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 mt-auto no-print">
+    <footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto no-print transition-colors duration-300">
         <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-sm text-gray-500">
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400">
                 &copy; {% now "Y" %} Sistema de Asistencia QR. Todos los derechos reservados.
             </p>
         </div>
     </footer>
 
+    <script>
+        var themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        var themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        // Change the icons inside the button based on previous settings
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+
+        var themeToggleBtn = document.getElementById('theme-toggle');
+
+        themeToggleBtn.addEventListener('click', function() {
+
+            // toggle icons inside button
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+
+            // if set via local storage previously
+            if (localStorage.getItem('color-theme')) {
+                if (localStorage.getItem('color-theme') === 'light') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                }
+
+            // if NOT set via local storage previously
+            } else {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            }
+
+        });
+    </script>
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>
