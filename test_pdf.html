@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+  <div id="card" style="background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); padding: 40px; text-align: center;">
+    <h1>Hello</h1>
+    <div style="background: white; padding: 20px; border-radius: 15px; display: inline-block;">
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" style="width: 100px; height: 100px;">
+    </div>
+  </div>
+  <button onclick="html2pdf().from(document.getElementById('card')).save()">PDF</button>
+</body>
+</html>

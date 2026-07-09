@@ -15,6 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 # Importaciones locales
 from .forms import RegistroPersonaForm
 from .models import Asistencia
+from django.shortcuts import redirect
 
 # -------------------------------------------------------------------------
 # Funciones Auxiliares
@@ -125,6 +126,29 @@ def registro_view(request):
 
 def lector_view(request):
     return render(request, 'core/lector.html')
+
+def estadisticas_view(request):
+    asistencias = Asistencia.objects.all().order_by('-time_entry')
+    total_registrados = asistencias.count()
+
+    # Asistieron son aquellos cuyo time_entry es mayor a 0
+    total_asistieron = asistencias.filter(time_entry__gt=0).count()
+    total_faltaron = asistencias.filter(time_entry=0).count()
+
+    context = {
+        'asistencias': asistencias,
+        'total_registrados': total_registrados,
+        'total_asistieron': total_asistieron,
+        'total_faltaron': total_faltaron
+    }
+
+    return render(request, 'core/estadisticas.html', context)
+
+def limpiar_db(request):
+    if request.method == 'POST':
+        Asistencia.objects.all().delete()
+        messages.success(request, 'La base de datos ha sido limpiada correctamente.')
+    return redirect('estadisticas')
 
 # -------------------------------------------------------------------------
 # API Endpoints (Lógica del Escáner)

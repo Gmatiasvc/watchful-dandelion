@@ -33,13 +33,13 @@
 {% endblock %}
 
 {% block content %}
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-8">
+    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden flex flex-col md:flex-row my-8 border border-transparent dark:border-gray-700">
         
         <!-- Sección del Formulario -->
         <div class="w-full md:w-1/2 p-8">
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-800">Registro de Asistencia</h1>
-                <p class="text-gray-500 text-sm mt-1">Ingresa los datos para generar el código QR de acceso.</p>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Registro de Asistencia</h1>
+                <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">Ingresa los datos para generar el código QR de acceso.</p>
             </div>
 
             <!-- Mensajes de Django -->
@@ -56,7 +56,7 @@
                 
                 {% for field in form %}
                 <div>
-                    <label class="block text-gray-700 text-sm font-bold mb-2" for="{{ field.id_for_label }}">
+                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2" for="{{ field.id_for_label }}">
                         {{ field.label }}
                     </label>
                     {{ field }}
@@ -66,39 +66,39 @@
                 </div>
                 {% endfor %}
 
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300 flex items-center justify-center gap-2">
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center gap-2">
                     <i class="fas fa-qrcode"></i> Registrar y Generar QR
                 </button>
             </form>
             
-            <div class="mt-6 pt-6 border-t border-gray-100 text-center">
-                <a href="{% url 'lector' %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+            <div class="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700 text-center">
+                <a href="{% url 'lector' %}" class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-sm font-medium">
                     <i class="fas fa-camera mr-1"></i> Ir al Escáner
                 </a>
             </div>
         </div>
 
         <!-- Sección de Resultado (QR) - ID añadido para impresión -->
-        <div id="printable-area" class="w-full md:w-1/2 bg-gray-50 p-8 flex flex-col items-center justify-center border-l border-gray-200">
+        <div id="printable-area" class="w-full md:w-1/2 bg-gray-50 dark:bg-gray-800/50 p-8 flex flex-col items-center justify-center border-l border-gray-200 dark:border-gray-700">
             {% if qr_image %}
-                <div class="text-center w-full max-w-sm border-2 border-dashed border-gray-300 p-6 rounded-xl bg-white transform transition duration-500 hover:scale-105 hover:shadow-2xl">
-                    <div class="uppercase tracking-wide text-sm text-indigo-500 font-semibold mb-2">Pase de Acceso</div>
+                <div class="text-center w-full max-w-sm border-2 border-dashed border-gray-300 dark:border-gray-600 p-6 rounded-xl bg-white dark:bg-gray-700 transform transition duration-500 hover:scale-105 hover:shadow-2xl">
+                    <div class="uppercase tracking-wide text-sm text-indigo-500 dark:text-indigo-400 font-semibold mb-2">Pase de Acceso</div>
                     
-                    <div class="bg-white p-2 rounded-lg inline-block mb-4 shadow-sm border border-gray-100">
+                    <div class="bg-white p-2 rounded-lg inline-block mb-4 shadow-sm border border-gray-100 dark:border-gray-600">
                         <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR Generado" class="w-48 h-48 mx-auto">
                     </div>
                     
-                    <h2 class="text-2xl font-bold text-gray-800 leading-tight">{{ nombre }}</h2>
-                    <p class="text-sm text-gray-500 mt-1 font-mono">ID: {{ hash_id|slice:":8" }}...</p>
+                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white leading-tight">{{ nombre }}</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-300 mt-1 font-mono">ID: {{ hash_id|slice:":8" }}...</p>
                     
                     <div class="mt-6 space-y-3 no-print flex flex-col gap-2">
                         <a href="data:image/png;base64,{{ qr_image }}" download="QR_{{ nombre }}.png" class="flex-1 w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2">
                             <i class="fas fa-download"></i> Guardar Imagen
                         </a>
                         
-                        <button onclick="window.print()" class="flex-1 w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2">
+                        <a href="{% url 'invitacion' hash_id=hash_id %}?print=true" target="_blank" class="flex-1 w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2">
                             <i class="fas fa-print"></i> Imprimir Pase
-                        </button>
+                        </a>
 
                         <a href="{% url 'invitacion' hash_id=hash_id %}" target="_blank" class="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2 mt-2">
                             <i class="fas fa-file-pdf"></i> Ver Invitación PDF
@@ -106,13 +106,23 @@
                     </div>
                 </div>
             {% else %}
-                <div class="text-center text-gray-400">
-                    <div class="w-24 h-24 mx-auto bg-gray-200 rounded-full flex items-center justify-center mb-4">
-                        <i class="fas fa-qrcode text-4xl text-gray-400"></i>
+                <div class="text-center text-gray-400 dark:text-gray-500">
+                    <div class="w-24 h-24 mx-auto bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-qrcode text-4xl text-gray-400 dark:text-gray-500"></i>
                     </div>
                     <p class="text-lg">El código QR aparecerá aquí<br>después de registrar los datos.</p>
                 </div>
             {% endif %}
         </div>
     </div>
+
+    <script>
+        // Make form fields dark mode compatible using javascript because we are using django forms
+        document.addEventListener('DOMContentLoaded', function() {
+            var inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="number"]');
+            inputs.forEach(function(input) {
+                input.classList.add('dark:bg-gray-700', 'dark:border-gray-600', 'dark:placeholder-gray-400', 'dark:text-white', 'dark:focus:ring-blue-500', 'dark:focus:border-blue-500');
+            });
+        });
+    </script>
 {% endblock %}

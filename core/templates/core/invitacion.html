@@ -53,17 +53,23 @@
         display: inline-block;
         margin: 20px 0;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 10;
     }
 
     .qr-image {
         width: 250px; /* QR grande en el centro */
         height: 250px;
+        position: relative;
+        z-index: 10;
+        display: block;
     }
 
     .invitation-footer {
         margin-top: 30px;
         color: rgba(255, 255, 255, 0.9);
         font-size: 0.9rem;
+        word-break: break-all;
     }
 
     /* Gráficos decorativos */
@@ -93,6 +99,26 @@
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
+
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        #invitation-container, #invitation-container * {
+            visibility: visible;
+        }
+        #invitation-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -112,9 +138,14 @@
             <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
         </div>
 
-        <button onclick="generarPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2">
-            <i class="fas fa-file-pdf"></i> Descargar PDF
-        </button>
+        <div class="flex items-center gap-2">
+            <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2">
+                <i class="fas fa-print"></i> Imprimir
+            </button>
+            <button onclick="generarPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </button>
+        </div>
     </div>
 
     <!-- Tarjeta de Invitación a Imprimir/Descargar -->
@@ -124,21 +155,22 @@
             <div class="decor-2"></div>
 
             <div class="invitation-header">
-                <h1 class="invitation-title editable-text" contenteditable="true">¡Estás Invitado!</h1>
-                <p class="invitation-subtitle editable-text" contenteditable="true">Nos emociona contar con tu presencia.</p>
+                <h1 id="invText1" class="invitation-title editable-text" contenteditable="true">¡Estás Invitado!</h1>
+                <p id="invText2" class="invitation-subtitle editable-text" contenteditable="true">Nos emociona contar con tu presencia.</p>
             </div>
 
-            <div class="guest-name editable-text" contenteditable="true">
+            <div class="guest-name editable-text" contenteditable="true" style="pointer-events: none;">
                 {{ nombre_completo }}
             </div>
 
             <div class="qr-container">
+                <!-- img converted from base64 -->
                 <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR" class="qr-image mx-auto">
             </div>
 
-            <div class="invitation-footer editable-text" contenteditable="true">
-                <p>Presenta este código QR en la entrada.</p>
-                <p>ID: {{ hash_id|slice:":8" }}...</p>
+            <div class="invitation-footer editable-text">
+                <p id="invText3" contenteditable="true">Presenta este código QR en la entrada.</p>
+                <p>ID: {{ hash_id }}</p>
             </div>
         </div>
     </div>
@@ -151,28 +183,68 @@
 
 {% block extra_scripts %}
 <script>
-    // Lógica para cambiar colores
+    // Elementos
     const bgColor1Input = document.getElementById('bgColor1');
     const bgColor2Input = document.getElementById('bgColor2');
     const textColorInput = document.getElementById('textColor');
     const card = document.getElementById('invitation-card');
+    const t1 = document.getElementById('invText1');
+    const t2 = document.getElementById('invText2');
+    const t3 = document.getElementById('invText3');
 
-    function updateColors() {
+    // Cargar configuraciones guardadas
+    function loadConfig() {
+        const saved = JSON.parse(localStorage.getItem('invitationConfig'));
+        if (saved) {
+            if (saved.bg1) bgColor1Input.value = saved.bg1;
+            if (saved.bg2) bgColor2Input.value = saved.bg2;
+            if (saved.text) textColorInput.value = saved.text;
+            if (saved.t1) t1.innerText = saved.t1;
+            if (saved.t2) t2.innerText = saved.t2;
+            if (saved.t3) t3.innerText = saved.t3;
+        }
+        applyConfig();
+    }
+
+    function applyConfig() {
         const c1 = bgColor1Input.value;
         const c2 = bgColor2Input.value;
         card.style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
-    }
 
-    function updateTextColor() {
         const color = textColorInput.value;
         document.querySelectorAll('.editable-text').forEach(el => {
             el.style.color = color;
         });
     }
 
-    bgColor1Input.addEventListener('input', updateColors);
-    bgColor2Input.addEventListener('input', updateColors);
-    textColorInput.addEventListener('input', updateTextColor);
+    function saveConfig() {
+        const config = {
+            bg1: bgColor1Input.value,
+            bg2: bgColor2Input.value,
+            text: textColorInput.value,
+            t1: t1.innerText,
+            t2: t2.innerText,
+            t3: t3.innerText
+        };
+        localStorage.setItem('invitationConfig', JSON.stringify(config));
+    }
+
+    bgColor1Input.addEventListener('input', () => { applyConfig(); saveConfig(); });
+    bgColor2Input.addEventListener('input', () => { applyConfig(); saveConfig(); });
+    textColorInput.addEventListener('input', () => { applyConfig(); saveConfig(); });
+
+    [t1, t2, t3].forEach(el => {
+        el.addEventListener('input', saveConfig);
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadConfig();
+        if (window.location.search.includes('print=true')) {
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+    });
 
     // Generación del PDF
     function generarPDF() {
