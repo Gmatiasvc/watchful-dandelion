@@ -5,6 +5,8 @@
 {% block extra_head %}
 <!-- html2pdf.js via CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!-- html2canvas for image download -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     /* Estilos personalizados para la invitación */
     #invitation-card {
@@ -91,10 +93,9 @@
         right: -80px;
     }
 
-    /* Edit controls */
+    /* Edit controls (some styling handled by tailwind classes) */
     .edit-controls {
         margin-bottom: 20px;
-        background: white;
         padding: 15px;
         border-radius: 10px;
         box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -126,23 +127,23 @@
 <div class="w-full max-w-4xl flex flex-col my-8 gap-6">
 
     <!-- Controles de Edición Básicos -->
-    <div class="edit-controls no-print w-full max-w-[600px] mx-auto flex flex-wrap gap-4 items-center justify-between">
+    <div class="edit-controls bg-white dark:bg-gray-800 border border-transparent dark:border-gray-700 no-print w-full max-w-[600px] mx-auto flex flex-wrap gap-4 items-center justify-between">
         <div class="flex items-center gap-2">
-            <label class="text-sm font-semibold text-gray-700">Color de fondo:</label>
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Color de fondo:</label>
             <input type="color" id="bgColor1" value="#f6d365" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
             <input type="color" id="bgColor2" value="#fda085" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
         </div>
 
         <div class="flex items-center gap-2">
-            <label class="text-sm font-semibold text-gray-700">Color de texto:</label>
+            <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Color de texto:</label>
             <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
         </div>
 
-        <div class="flex items-center gap-2">
-            <button onclick="window.print()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2">
-                <i class="fas fa-print"></i> Imprimir
+        <div class="flex items-center gap-2 mt-4 sm:mt-0 w-full sm:w-auto justify-end">
+            <button onclick="descargarImagen()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center">
+                <i class="fas fa-image"></i> Descargar como Imagen
             </button>
-            <button onclick="generarPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2">
+            <button onclick="generarPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2 flex-1 sm:flex-none justify-center">
                 <i class="fas fa-file-pdf"></i> Descargar PDF
             </button>
         </div>
@@ -159,7 +160,7 @@
                 <p id="invText2" class="invitation-subtitle editable-text" contenteditable="true">Nos emociona contar con tu presencia.</p>
             </div>
 
-            <div class="guest-name editable-text" contenteditable="true" style="pointer-events: none;">
+            <div id="invText4" class="guest-name editable-text" contenteditable="true">
                 {{ nombre_completo }}
             </div>
 
@@ -192,6 +193,8 @@
     const t2 = document.getElementById('invText2');
     const t3 = document.getElementById('invText3');
 
+    const t4 = document.getElementById('invText4');
+
     // Cargar configuraciones guardadas
     function loadConfig() {
         const saved = JSON.parse(localStorage.getItem('invitationConfig'));
@@ -202,6 +205,7 @@
             if (saved.t1) t1.innerText = saved.t1;
             if (saved.t2) t2.innerText = saved.t2;
             if (saved.t3) t3.innerText = saved.t3;
+            if (saved.t4) t4.innerText = saved.t4;
         }
         applyConfig();
     }
@@ -224,7 +228,8 @@
             text: textColorInput.value,
             t1: t1.innerText,
             t2: t2.innerText,
-            t3: t3.innerText
+            t3: t3.innerText,
+            t4: t4.innerText
         };
         localStorage.setItem('invitationConfig', JSON.stringify(config));
     }
@@ -233,7 +238,7 @@
     bgColor2Input.addEventListener('input', () => { applyConfig(); saveConfig(); });
     textColorInput.addEventListener('input', () => { applyConfig(); saveConfig(); });
 
-    [t1, t2, t3].forEach(el => {
+    [t1, t2, t3, t4].forEach(el => {
         el.addEventListener('input', saveConfig);
     });
 
@@ -261,6 +266,22 @@
 
         // Generar y descargar el PDF
         html2pdf().set(opt).from(element).save();
+    }
+
+    // Generación de Imagen
+    function descargarImagen() {
+        const element = document.getElementById('invitation-card');
+
+        html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: null
+        }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = 'Invitacion_{{ nombre_completo|slugify }}.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
     }
 </script>
 {% endblock %}
