@@ -49,5 +49,3 @@ if __name__ == "__main__":
     print(register("Valentina","Pajares","99999999"))
     print(register("Jean","Bernilla","99999999"))
     print(register("Andre","Rebaza","99999999"))
-    print(register("Camila","Zevallos","99999999"))
-    print(register("Angela","Roldan","99999999"))

@@ -40,6 +40,13 @@ def obtener_hora_local(timestamp):
 # Vistas (Views)
 # -------------------------------------------------------------------------
 
+def index_view(request):
+    """
+    Muestra la página principal con enlaces al registro y al escáner.
+    """
+    return render(request, 'core/index.html')
+
+
 def registro_view(request):
     """
     Maneja el formulario de registro:
