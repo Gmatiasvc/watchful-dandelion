@@ -7,7 +7,7 @@ import json
 import pytz # type: ignore
 from datetime import datetime
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -195,3 +195,33 @@ def procesar_qr(request):
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+def invitacion_view(request, hash_id):
+    """
+    Vista para renderizar la invitación en un formato amigable y descargable.
+    """
+    asistencia = get_object_or_404(Asistencia, id_hash=hash_id)
+
+    # Generar QR
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H, # Mayor corrección de errores
+        box_size=15, # Tamaño más grande
+        border=4,
+    )
+    qr.add_data(hash_id)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="#1a202c", back_color="white")
+
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    qr_image_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    context = {
+        'hash_id': hash_id,
+        'nombre_completo': f"{asistencia.nombre} {asistencia.apellido}".strip(),
+        'qr_image': qr_image_base64,
+    }
+
+    return render(request, 'core/invitacion.html', context)

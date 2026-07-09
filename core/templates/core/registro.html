@@ -99,6 +99,10 @@
                         <button onclick="window.print()" class="flex-1 w-full bg-gray-800 hover:bg-gray-900 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2">
                             <i class="fas fa-print"></i> Imprimir Pase
                         </button>
+
+                        <a href="{% url 'invitacion' hash_id=hash_id %}" target="_blank" class="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2 mt-2">
+                            <i class="fas fa-file-pdf"></i> Ver Invitación PDF
+                        </a>
                     </div>
                 </div>
             {% else %}

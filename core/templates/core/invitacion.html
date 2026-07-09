@@ -1,0 +1,194 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Invitación - Asistencia QR{% endblock %}
+
+{% block extra_head %}
+<!-- html2pdf.js via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+    /* Estilos personalizados para la invitación */
+    #invitation-card {
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto;
+        /* Fondo gradiente por defecto, puede ser editado o cambiado por una imagen */
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+        text-align: center;
+        padding: 40px 20px;
+        color: #333;
+    }
+
+    .invitation-header {
+        margin-bottom: 30px;
+    }
+
+    .invitation-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: #fff;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+
+    .invitation-subtitle {
+        font-size: 1.2rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .guest-name {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #fff;
+    }
+
+    .qr-container {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        display: inline-block;
+        margin: 20px 0;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .qr-image {
+        width: 250px; /* QR grande en el centro */
+        height: 250px;
+    }
+
+    .invitation-footer {
+        margin-top: 30px;
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.9rem;
+    }
+
+    /* Gráficos decorativos */
+    .decor-1, .decor-2 {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+    }
+    .decor-1 {
+        width: 150px;
+        height: 150px;
+        top: -50px;
+        left: -50px;
+    }
+    .decor-2 {
+        width: 200px;
+        height: 200px;
+        bottom: -80px;
+        right: -80px;
+    }
+
+    /* Edit controls */
+    .edit-controls {
+        margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="w-full max-w-4xl flex flex-col my-8 gap-6">
+
+    <!-- Controles de Edición Básicos -->
+    <div class="edit-controls no-print w-full max-w-[600px] mx-auto flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-semibold text-gray-700">Color de fondo:</label>
+            <input type="color" id="bgColor1" value="#f6d365" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
+            <input type="color" id="bgColor2" value="#fda085" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
+        </div>
+
+        <div class="flex items-center gap-2">
+            <label class="text-sm font-semibold text-gray-700">Color de texto:</label>
+            <input type="color" id="textColor" value="#ffffff" class="w-8 h-8 cursor-pointer rounded border-0 p-0">
+        </div>
+
+        <button onclick="generarPDF()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow transition-colors flex items-center gap-2">
+            <i class="fas fa-file-pdf"></i> Descargar PDF
+        </button>
+    </div>
+
+    <!-- Tarjeta de Invitación a Imprimir/Descargar -->
+    <div id="invitation-container" class="w-full flex justify-center">
+        <div id="invitation-card">
+            <div class="decor-1"></div>
+            <div class="decor-2"></div>
+
+            <div class="invitation-header">
+                <h1 class="invitation-title editable-text" contenteditable="true">¡Estás Invitado!</h1>
+                <p class="invitation-subtitle editable-text" contenteditable="true">Nos emociona contar con tu presencia.</p>
+            </div>
+
+            <div class="guest-name editable-text" contenteditable="true">
+                {{ nombre_completo }}
+            </div>
+
+            <div class="qr-container">
+                <img src="data:image/png;base64,{{ qr_image }}" alt="Código QR" class="qr-image mx-auto">
+            </div>
+
+            <div class="invitation-footer editable-text" contenteditable="true">
+                <p>Presenta este código QR en la entrada.</p>
+                <p>ID: {{ hash_id|slice:":8" }}...</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-sm text-gray-500 mt-4 no-print">
+        <p><i class="fas fa-info-circle"></i> Puedes hacer clic en los textos de la invitación para editarlos antes de descargar.</p>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Lógica para cambiar colores
+    const bgColor1Input = document.getElementById('bgColor1');
+    const bgColor2Input = document.getElementById('bgColor2');
+    const textColorInput = document.getElementById('textColor');
+    const card = document.getElementById('invitation-card');
+
+    function updateColors() {
+        const c1 = bgColor1Input.value;
+        const c2 = bgColor2Input.value;
+        card.style.background = `linear-gradient(135deg, ${c1} 0%, ${c2} 100%)`;
+    }
+
+    function updateTextColor() {
+        const color = textColorInput.value;
+        document.querySelectorAll('.editable-text').forEach(el => {
+            el.style.color = color;
+        });
+    }
+
+    bgColor1Input.addEventListener('input', updateColors);
+    bgColor2Input.addEventListener('input', updateColors);
+    textColorInput.addEventListener('input', updateTextColor);
+
+    // Generación del PDF
+    function generarPDF() {
+        const element = document.getElementById('invitation-card');
+
+        // Configuraciones de html2pdf
+        const opt = {
+            margin:       0,
+            filename:     'Invitacion_{{ nombre_completo|slugify }}.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        // Generar y descargar el PDF
+        html2pdf().set(opt).from(element).save();
+    }
+</script>
+{% endblock %}

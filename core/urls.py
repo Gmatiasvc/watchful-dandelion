@@ -13,4 +13,7 @@ urlpatterns = [
     
     # API: Procesa la petición asíncrona del escáner
     path('api/procesar-qr/', views.procesar_qr, name='procesar_qr'),
+
+    # Ruta de la invitación PDF
+    path('invitacion/<str:hash_id>/', views.invitacion_view, name='invitacion'),
 ]
