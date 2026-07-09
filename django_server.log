@@ -1,0 +1,4 @@
+Watching for file changes with StatReloader
+[08/Jul/2026 21:44:37] "GET / HTTP/1.1" 200 9500
+[08/Jul/2026 21:45:34] "GET / HTTP/1.1" 200 9500
+[08/Jul/2026 21:45:39] "GET /estadisticas/ HTTP/1.1" 200 29924

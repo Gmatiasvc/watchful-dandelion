@@ -6,10 +6,10 @@
 <div class="w-full max-w-5xl mx-auto space-y-12">
     <!-- Hero Section -->
     <div class="text-center space-y-4">
-        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
-            Sistema de <span class="text-indigo-600">Asistencia QR</span>
+        <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white tracking-tight">
+            Sistema de <span class="text-indigo-600 dark:text-indigo-400">Asistencia QR</span>
         </h1>
-        <p class="text-xl text-gray-500 max-w-2xl mx-auto">
+        <p class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
             Gestiona la entrada y salida de manera rápida, segura y sin contacto. Elige una opción para comenzar.
         </p>
     </div>
@@ -18,29 +18,29 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
         <!-- Registration Card -->
-        <a href="{% url 'registro' %}" class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 flex flex-col items-center p-8 text-center">
-            <div class="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-indigo-600 transition-colors duration-300">
-                <i class="fas fa-user-plus text-3xl text-indigo-600 group-hover:text-white transition-colors duration-300"></i>
+        <a href="{% url 'registro' %}" class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 dark:border-gray-700 flex flex-col items-center p-8 text-center">
+            <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mb-6 group-hover:bg-indigo-600 dark:group-hover:bg-indigo-500 transition-colors duration-300">
+                <i class="fas fa-user-plus text-3xl text-indigo-600 dark:text-indigo-400 group-hover:text-white transition-colors duration-300"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-3">Registro de Usuarios</h2>
-            <p class="text-gray-500 mb-6 flex-grow">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Registro de Usuarios</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 flex-grow">
                 Registra nuevos usuarios y genera su pase de acceso QR al instante. Listo para imprimir o descargar.
             </p>
-            <span class="inline-flex items-center text-indigo-600 font-semibold group-hover:text-indigo-800">
+            <span class="inline-flex items-center text-indigo-600 dark:text-indigo-400 font-semibold group-hover:text-indigo-800 dark:group-hover:text-indigo-300">
                 Ir al Registro <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
             </span>
         </a>
 
         <!-- Scanner Card -->
-        <a href="{% url 'lector' %}" class="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 flex flex-col items-center p-8 text-center">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6 group-hover:bg-green-600 transition-colors duration-300">
-                <i class="fas fa-camera text-3xl text-green-600 group-hover:text-white transition-colors duration-300"></i>
+        <a href="{% url 'lector' %}" class="group bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 overflow-hidden border border-gray-100 dark:border-gray-700 flex flex-col items-center p-8 text-center">
+            <div class="w-20 h-20 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-6 group-hover:bg-green-600 dark:group-hover:bg-green-500 transition-colors duration-300">
+                <i class="fas fa-camera text-3xl text-green-600 dark:text-green-400 group-hover:text-white transition-colors duration-300"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900 mb-3">Escáner Web</h2>
-            <p class="text-gray-500 mb-6 flex-grow">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Escáner Web</h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-6 flex-grow">
                 Usa la cámara de tu dispositivo para escanear los pases QR y registrar entradas o salidas automáticamente.
             </p>
-            <span class="inline-flex items-center text-green-600 font-semibold group-hover:text-green-800">
+            <span class="inline-flex items-center text-green-600 dark:text-green-400 font-semibold group-hover:text-green-800 dark:group-hover:text-green-300">
                 Ir al Escáner <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
             </span>
         </a>
