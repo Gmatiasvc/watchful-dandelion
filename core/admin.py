@@ -5,13 +5,19 @@ import pytz
 from django.conf import settings
 from .models import Asistencia
 
+from django.urls import reverse
+import urllib.parse
+
 @admin.register(Asistencia)
 class AsistenciaAdmin(admin.ModelAdmin):
     # Campos a mostrar en la lista
-    list_display = ('get_nombre_completo', 'get_documento', 'get_hora_entrada', 'get_hora_salida', 'get_duracion')
+    list_display = ('get_nombre_completo', 'get_documento', 'telefono', 'get_hora_entrada', 'get_hora_salida', 'get_duracion', 'enviar_whatsapp')
     
     # Campos por los que se puede buscar
-    search_fields = ('nombre', 'apellido', 'documento', 'id_hash')
+    search_fields = ('nombre', 'apellido', 'documento', 'telefono', 'id_hash')
+
+    # Permitir edición rápida del teléfono
+    list_editable = ('telefono',)
     
     # Filtros laterales
     list_filter = ('time_entry', 'time_exit')
@@ -65,3 +71,34 @@ class AsistenciaAdmin(admin.ModelAdmin):
             return format_html('<span style="color:green;">En curso...</span>')
         return "-"
     get_duracion.short_description = "Duración Estancia"
+
+    def enviar_whatsapp(self, obj):
+        # Generate the invitation link
+        domain = "http://127.0.0.1:8000" # Assuming local development. Consider using request.build_absolute_uri() in a real view, but in admin it's hard to get the request without overriding changelist_view. We use a placeholder or relative if domain is unknown.
+        invitation_url = f"{domain}{reverse('invitacion', args=[obj.id_hash])}"
+        nombre = f"{obj.nombre} {obj.apellido}".strip() if obj.nombre else "Invitado"
+
+        mensaje = f"¡Hola {nombre}! Aquí tienes tu invitación y código QR de acceso para el evento: {invitation_url}"
+        mensaje_encoded = urllib.parse.quote(mensaje)
+
+        # Guardamos datos en atributos data-* para que el JS los use
+        telefono = obj.telefono if obj.telefono else ""
+
+        return format_html(
+            '''
+            <button type="button"
+                    class="button"
+                    style="background-color: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;"
+                    onclick="sendWhatsApp(this)"
+                    data-telefono="{}"
+                    data-mensaje="{}">
+                Enviar WhatsApp
+            </button>
+            ''',
+            telefono,
+            mensaje_encoded
+        )
+    enviar_whatsapp.short_description = "Invitación"
+
+    class Media:
+        js = ('admin/js/whatsapp_sender.js',)

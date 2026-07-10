@@ -66,6 +66,7 @@ def registro_view(request):
             nombre = form.cleaned_data['nombre']
             apellido = form.cleaned_data['apellido']
             documento = form.cleaned_data['documento']
+            telefono = form.cleaned_data.get('telefono', '')
             
             # 1. Generar Hash
             hash_id = generar_hash(nombre, apellido, documento)
@@ -79,15 +80,24 @@ def registro_view(request):
                     'time_exit': 0,
                     'nombre': nombre,
                     'apellido': apellido,
-                    'documento': documento
+                    'documento': documento,
+                    'telefono': telefono
                 }
             )
 
-            # Si ya existía pero no tenía los datos personales (registros antiguos), los actualizamos
-            if not created and (not obj.nombre or not obj.documento):
+            # Actualizar datos si es necesario (ya sea antiguos sin nombre o actualizar el teléfono)
+            actualizar = False
+            if not obj.nombre or not obj.documento:
                 obj.nombre = nombre
                 obj.apellido = apellido
                 obj.documento = documento
+                actualizar = True
+
+            if telefono and obj.telefono != telefono:
+                obj.telefono = telefono
+                actualizar = True
+
+            if actualizar and not created:
                 obj.save()
 
             if created:
