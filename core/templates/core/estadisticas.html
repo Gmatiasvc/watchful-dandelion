@@ -103,6 +103,7 @@
                         <th class="p-4 font-semibold border-b dark:border-gray-700">Documento</th>
                         <th class="p-4 font-semibold border-b dark:border-gray-700">Estado</th>
                         <th class="p-4 font-semibold border-b dark:border-gray-700 text-right">Hash ID</th>
+                        <th class="p-4 font-semibold border-b dark:border-gray-700 text-center">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-gray-700 text-gray-700 dark:text-gray-300" id="tableBody">
@@ -124,10 +125,15 @@
                         <td class="p-4 text-right text-xs font-mono text-gray-500 dark:text-gray-400">
                             {{ p.id_hash|slice:":10" }}...
                         </td>
+                        <td class="p-4 text-center">
+                            <button type="button" onclick="sendWhatsAppEstadisticas('{{ p.telefono|default_if_none:"" }}', '{{ p.nombre|default:"Invitado"|escapejs }} {{ p.apellido|default:""|escapejs }}', '{{ p.id_hash }}')" class="text-white px-3 py-1.5 rounded text-sm font-medium transition duration-300 shadow-sm flex items-center justify-center gap-1 mx-auto hover:opacity-90" style="background-color: #25D366;">
+                                <i class="fab fa-whatsapp"></i> Enviar
+                            </button>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="4" class="p-8 text-center text-gray-500 dark:text-gray-400 italic">No hay registros en la base de datos.</td>
+                        <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400 italic">No hay registros en la base de datos.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -161,8 +167,8 @@
                         'rgba(34, 197, 94, 0.8)', // Green-500
                         'rgba(239, 68, 68, 0.8)'  // Red-500
                     ],
-                    borderColor: [borderColor, borderColor],
-                    borderWidth: 2,
+                    borderColor: 'transparent',
+                    borderWidth: 0,
                     hoverOffset: 4
                 }]
             },
@@ -202,5 +208,31 @@
             }
         });
     });
+
+    function sendWhatsAppEstadisticas(telefonoRegistrado, nombreCompleto, hashId) {
+        let telefono = telefonoRegistrado;
+        let nombre = nombreCompleto.trim();
+
+        if (telefono) {
+            telefono = telefono.replace(/[^0-9+]/g, '');
+        }
+
+        if (!telefono) {
+            telefono = prompt(`Por favor, ingresa el número de teléfono para ${nombre} (incluyendo el código de país, ej. +51...):`);
+            if (!telefono) {
+                alert("Envío cancelado. Se requiere un número de teléfono.");
+                return;
+            }
+            telefono = telefono.replace(/[^0-9+]/g, '');
+        }
+
+        const invitationUrl = window.location.origin + "/invitacion/" + hashId + "/";
+        const mensaje = `¡Hola ${nombre}! Aquí tienes tu invitación y código QR de acceso para el evento: ${invitationUrl}`;
+
+        if (confirm("¿Estás seguro de que deseas enviar la invitación por WhatsApp al número " + telefono + "?")) {
+            const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje);
+            window.open(url, '_blank');
+        }
+    }
 </script>
 {% endblock %}

@@ -59,6 +59,7 @@ def registro_view(request):
     qr_image_base64 = None
     hash_generado = None
     nombre_completo = None
+    telefono_registrado = None
 
     if request.method == 'POST':
         form = RegistroPersonaForm(request.POST)
@@ -123,6 +124,7 @@ def registro_view(request):
             
             hash_generado = hash_id
             nombre_completo = f"{nombre} {apellido}"
+            telefono_registrado = telefono
 
     else:
         form = RegistroPersonaForm()
@@ -131,7 +133,8 @@ def registro_view(request):
         'form': form,
         'qr_image': qr_image_base64,
         'hash_id': hash_generado,
-        'nombre': nombre_completo
+        'nombre': nombre_completo,
+        'telefono': telefono_registrado
     })
 
 def lector_view(request):

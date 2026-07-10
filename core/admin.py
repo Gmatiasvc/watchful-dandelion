@@ -73,16 +73,11 @@ class AsistenciaAdmin(admin.ModelAdmin):
     get_duracion.short_description = "Duración Estancia"
 
     def enviar_whatsapp(self, obj):
-        # Generate the invitation link
-        domain = "http://127.0.0.1:8000" # Assuming local development. Consider using request.build_absolute_uri() in a real view, but in admin it's hard to get the request without overriding changelist_view. We use a placeholder or relative if domain is unknown.
-        invitation_url = f"{domain}{reverse('invitacion', args=[obj.id_hash])}"
         nombre = f"{obj.nombre} {obj.apellido}".strip() if obj.nombre else "Invitado"
-
-        mensaje = f"¡Hola {nombre}! Aquí tienes tu invitación y código QR de acceso para el evento: {invitation_url}"
-        mensaje_encoded = urllib.parse.quote(mensaje)
 
         # Guardamos datos en atributos data-* para que el JS los use
         telefono = obj.telefono if obj.telefono else ""
+        hash_id = obj.id_hash
 
         return format_html(
             '''
@@ -91,12 +86,14 @@ class AsistenciaAdmin(admin.ModelAdmin):
                     style="background-color: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;"
                     onclick="sendWhatsApp(this)"
                     data-telefono="{}"
-                    data-mensaje="{}">
+                    data-nombre="{}"
+                    data-hash="{}">
                 Enviar WhatsApp
             </button>
             ''',
             telefono,
-            mensaje_encoded
+            nombre,
+            hash_id
         )
     enviar_whatsapp.short_description = "Invitación"
 

@@ -99,6 +99,10 @@
                         <a href="{% url 'invitacion' hash_id=hash_id %}" target="_blank" class="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2 mt-2">
                             <i class="fas fa-file-pdf"></i> Ver Invitación PDF
                         </a>
+
+                        <button type="button" onclick="sendWhatsAppInvitacion('{{ telefono|default_if_none:"" }}', '{{ nombre|escapejs }}', '{{ hash_id }}')" class="flex-1 w-full text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2 mt-2" style="background-color: #25D366;">
+                            <i class="fab fa-whatsapp text-lg"></i> Enviar WhatsApp
+                        </button>
                     </div>
                 </div>
             {% else %}
@@ -120,5 +124,30 @@
                 input.classList.add('dark:bg-gray-700', 'dark:border-gray-600', 'dark:placeholder-gray-400', 'dark:text-white', 'dark:focus:ring-blue-500', 'dark:focus:border-blue-500');
             });
         });
+
+        function sendWhatsAppInvitacion(telefonoRegistrado, nombre, hashId) {
+            let telefono = telefonoRegistrado;
+
+            if (telefono) {
+                telefono = telefono.replace(/[^0-9+]/g, '');
+            }
+
+            if (!telefono) {
+                telefono = prompt("Por favor, ingresa el número de teléfono (incluyendo el código de país, ej. +51...):");
+                if (!telefono) {
+                    alert("Envío cancelado. Se requiere un número de teléfono.");
+                    return;
+                }
+                telefono = telefono.replace(/[^0-9+]/g, '');
+            }
+
+            const invitationUrl = window.location.origin + "/invitacion/" + hashId + "/";
+            const mensaje = `¡Hola ${nombre}! Aquí tienes tu invitación y código QR de acceso para el evento: ${invitationUrl}`;
+
+            if (confirm("¿Estás seguro de que deseas enviar la invitación por WhatsApp al número " + telefono + "?")) {
+                const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje);
+                window.open(url, '_blank');
+            }
+        }
     </script>
 {% endblock %}
