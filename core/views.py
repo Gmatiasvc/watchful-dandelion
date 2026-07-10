@@ -233,6 +233,32 @@ def procesar_qr(request):
     
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
+@csrf_exempt
+def actualizar_telefono(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            hash_id = data.get('hash_id')
+            nuevo_telefono = data.get('telefono', '')
+
+            if not hash_id:
+                return JsonResponse({'status': 'error', 'message': 'Hash no proporcionado'}, status=400)
+
+            registro = Asistencia.objects.get(id_hash=hash_id)
+            registro.telefono = nuevo_telefono
+            registro.save()
+
+            return JsonResponse({'status': 'success', 'telefono': nuevo_telefono})
+
+        except Asistencia.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Usuario no encontrado'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'JSON inválido'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
 def invitacion_view(request, hash_id):
     """
     Vista para renderizar la invitación en un formato amigable y descargable.

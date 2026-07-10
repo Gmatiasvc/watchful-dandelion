@@ -5,6 +5,8 @@
 {% block extra_head %}
 <!-- Chart.js para las gráficas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- html2canvas for image generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -101,6 +103,7 @@
                     <tr class="bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-sm uppercase tracking-wider">
                         <th class="p-4 font-semibold border-b dark:border-gray-700">Nombre Completo</th>
                         <th class="p-4 font-semibold border-b dark:border-gray-700">Documento</th>
+                        <th class="p-4 font-semibold border-b dark:border-gray-700">Teléfono</th>
                         <th class="p-4 font-semibold border-b dark:border-gray-700">Estado</th>
                         <th class="p-4 font-semibold border-b dark:border-gray-700 text-right">Hash ID</th>
                         <th class="p-4 font-semibold border-b dark:border-gray-700 text-center">Acciones</th>
@@ -111,6 +114,14 @@
                     <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors">
                         <td class="p-4 font-medium searchable">{{ p.nombre|default:"-" }} {{ p.apellido|default:"" }}</td>
                         <td class="p-4 searchable">{{ p.documento|default:"-" }}</td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-2">
+                                <span id="telefono-text-{{ p.id_hash }}" class="text-sm">{{ p.telefono|default:"-" }}</span>
+                                <button onclick="editarTelefono('{{ p.id_hash }}')" class="w-6 h-6 bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 rounded text-gray-600 dark:text-gray-300 flex items-center justify-center transition" title="Editar Teléfono">
+                                    <i class="fas fa-pencil-alt text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
                         <td class="p-4">
                             {% if p.time_entry > 0 %}
                                 <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
@@ -126,14 +137,14 @@
                             {{ p.id_hash|slice:":10" }}...
                         </td>
                         <td class="p-4 text-center">
-                            <button type="button" onclick="sendWhatsAppEstadisticas('{{ p.telefono|default_if_none:"" }}', '{{ p.nombre|default:"Invitado"|escapejs }} {{ p.apellido|default:""|escapejs }}', '{{ p.id_hash }}')" class="text-white px-3 py-1.5 rounded text-sm font-medium transition duration-300 shadow-sm flex items-center justify-center gap-1 mx-auto hover:opacity-90" style="background-color: #25D366;">
+                            <button type="button" id="btn-wsp-{{ p.id_hash }}" onclick="sendWhatsAppEstadisticas('{{ p.id_hash }}', '{{ p.nombre|default:"Invitado"|escapejs }} {{ p.apellido|default:""|escapejs }}')" class="text-white px-3 py-1.5 rounded text-sm font-medium transition duration-300 shadow-sm flex items-center justify-center gap-1 mx-auto hover:opacity-90" style="background-color: #25D366;" data-telefono="{{ p.telefono|default_if_none:"" }}">
                                 <i class="fab fa-whatsapp"></i> Enviar
                             </button>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="p-8 text-center text-gray-500 dark:text-gray-400 italic">No hay registros en la base de datos.</td>
+                        <td colspan="6" class="p-8 text-center text-gray-500 dark:text-gray-400 italic">No hay registros en la base de datos.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -209,8 +220,46 @@
         });
     });
 
-    function sendWhatsAppEstadisticas(telefonoRegistrado, nombreCompleto, hashId) {
-        let telefono = telefonoRegistrado;
+    function editarTelefono(hashId) {
+        let currentPhoneElement = document.getElementById('telefono-text-' + hashId);
+        let btnWsp = document.getElementById('btn-wsp-' + hashId);
+        let currentPhone = btnWsp.getAttribute('data-telefono') || '';
+
+        let newPhone = prompt("Ingresa el nuevo número de teléfono (incluyendo el código de país, ej. +51...):", currentPhone);
+
+        if (newPhone !== null && newPhone !== currentPhone) {
+            newPhone = newPhone.replace(/[^0-9+]/g, '');
+
+            fetch('/api/actualizar-telefono/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}' // We need CSRF, wait views is exempt but it's good practice. Wait, api is csrf_exempt.
+                },
+                body: JSON.stringify({
+                    'hash_id': hashId,
+                    'telefono': newPhone
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    currentPhoneElement.innerText = newPhone ? newPhone : "-";
+                    btnWsp.setAttribute('data-telefono', newPhone);
+                } else {
+                    alert("Error al actualizar: " + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Ocurrió un error de conexión.");
+            });
+        }
+    }
+
+    async function sendWhatsAppEstadisticas(hashId, nombreCompleto) {
+        let btn = document.getElementById('btn-wsp-' + hashId);
+        let telefono = btn.getAttribute('data-telefono');
         let nombre = nombreCompleto.trim();
 
         if (telefono) {
@@ -224,14 +273,108 @@
                 return;
             }
             telefono = telefono.replace(/[^0-9+]/g, '');
+            // Optionally update the DOM and backend if they entered it here
+            document.getElementById('telefono-text-' + hashId).innerText = telefono;
+            btn.setAttribute('data-telefono', telefono);
+            fetch('/api/actualizar-telefono/', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ 'hash_id': hashId, 'telefono': telefono })
+            });
         }
 
-        const invitationUrl = window.location.origin + "/invitacion/" + hashId + "/";
-        const mensaje = `¡Hola ${nombre}! Aquí tienes tu invitación y código QR de acceso para el evento: ${invitationUrl}`;
+        if (!confirm(`¿Deseas generar y enviar la imagen de la invitación a ${nombre} por WhatsApp? \n\nEl sistema copiará la imagen al portapapeles y abrirá WhatsApp. Solo tendrás que pegar (Ctrl+V) la imagen en el chat y enviar.`)) {
+            return;
+        }
 
-        if (confirm("¿Estás seguro de que deseas enviar la invitación por WhatsApp al número " + telefono + "?")) {
-            const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje);
-            window.open(url, '_blank');
+        // Change button state
+        let originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generando...';
+        btn.disabled = true;
+
+        try {
+            // Fetch the invitation HTML
+            const response = await fetch(window.location.origin + "/invitacion/" + hashId + "/");
+            const htmlText = await response.text();
+
+            // Create a hidden iframe to render it
+            const iframe = document.createElement('iframe');
+            iframe.style.position = 'absolute';
+            iframe.style.width = '600px';
+            iframe.style.height = '800px';
+            iframe.style.top = '-9999px';
+            iframe.style.left = '-9999px';
+            document.body.appendChild(iframe);
+
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(htmlText);
+            iframe.contentDocument.close();
+
+            // Wait for iframe resources (images, fonts) to load
+            await new Promise(resolve => {
+                iframe.onload = () => {
+                    setTimeout(resolve, 500); // Give it a little extra time for the font/css to settle
+                };
+            });
+
+            const card = iframe.contentDocument.getElementById('invitation-card');
+
+            if (!card) {
+                throw new Error("No se pudo encontrar la tarjeta en la invitación.");
+            }
+
+            // Apply saved styles if available (like in invitacion.html)
+            const saved = JSON.parse(localStorage.getItem('invitationConfig'));
+            if (saved) {
+                if (saved.bg1 && saved.bg2) card.style.background = `linear-gradient(135deg, ${saved.bg1} 0%, ${saved.bg2} 100%)`;
+                if (saved.text) {
+                    Array.from(card.querySelectorAll('.editable-text')).forEach(el => el.style.color = saved.text);
+                }
+                if (saved.t1) iframe.contentDocument.getElementById('invText1').innerText = saved.t1;
+                if (saved.t2) iframe.contentDocument.getElementById('invText2').innerText = saved.t2;
+                if (saved.t3) iframe.contentDocument.getElementById('invText3').innerText = saved.t3;
+                if (saved.t4) iframe.contentDocument.getElementById('invText4').innerText = saved.t4;
+            }
+
+            // Generate canvas
+            const canvas = await html2canvas(card, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: null,
+                windowWidth: 600
+            });
+
+            // Clean up iframe
+            document.body.removeChild(iframe);
+
+            // Copy to clipboard
+            canvas.toBlob(async function(blob) {
+                try {
+                    const item = new ClipboardItem({ "image/png": blob });
+                    await navigator.clipboard.write([item]);
+
+                    // Open WhatsApp Web
+                    const url = "https://wa.me/" + telefono;
+                    window.open(url, '_blank');
+
+                    setTimeout(() => {
+                        alert("¡Imagen copiada al portapapeles!\n\nSe ha abierto WhatsApp. Solo presiona 'Pegar' (Ctrl+V) en el chat para enviar la imagen.");
+                    }, 500);
+
+                } catch (err) {
+                    console.error("Error al copiar al portapapeles:", err);
+                    alert("No se pudo copiar la imagen al portapapeles automáticamente. Tu navegador podría no soportar esta función. \n\nIntenta descargar la imagen desde la vista de Invitación.");
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            }, "image/png");
+
+        } catch (error) {
+            console.error(error);
+            alert("Error al generar la imagen de la invitación.");
+            btn.innerHTML = originalText;
+            btn.disabled = false;
         }
     }
 </script>

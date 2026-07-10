@@ -20,6 +20,9 @@ urlpatterns = [
     # API: Procesa la petición asíncrona del escáner
     path('api/procesar-qr/', views.procesar_qr, name='procesar_qr'),
 
+    # API: Actualizar el teléfono desde la tabla
+    path('api/actualizar-telefono/', views.actualizar_telefono, name='actualizar_telefono'),
+
     # Ruta de la invitación PDF
     path('invitacion/<str:hash_id>/', views.invitacion_view, name='invitacion'),
 ]

@@ -3,6 +3,8 @@
 {% block title %}Registro de Asistencia - Asistencia QR{% endblock %}
 
 {% block extra_head %}
+<!-- html2canvas for image generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     /* Estilos específicos para impresión */
     @media print {
@@ -125,7 +127,7 @@
             });
         });
 
-        function sendWhatsAppInvitacion(telefonoRegistrado, nombre, hashId) {
+        async function sendWhatsAppInvitacion(telefonoRegistrado, nombre, hashId) {
             let telefono = telefonoRegistrado;
 
             if (telefono) {
@@ -141,12 +143,86 @@
                 telefono = telefono.replace(/[^0-9+]/g, '');
             }
 
-            const invitationUrl = window.location.origin + "/invitacion/" + hashId + "/";
-            const mensaje = `¡Hola ${nombre}! Aquí tienes tu invitación y código QR de acceso para el evento: ${invitationUrl}`;
+            if (!confirm(`¿Deseas generar y enviar la imagen de la invitación a ${nombre} por WhatsApp? \n\nEl sistema copiará la imagen al portapapeles y abrirá WhatsApp. Solo tendrás que pegar (Ctrl+V) la imagen en el chat y enviar.`)) {
+                return;
+            }
 
-            if (confirm("¿Estás seguro de que deseas enviar la invitación por WhatsApp al número " + telefono + "?")) {
-                const url = "https://wa.me/" + telefono + "?text=" + encodeURIComponent(mensaje);
-                window.open(url, '_blank');
+            // The button triggering this
+            let btn = event.currentTarget;
+            let originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-lg"></i> Generando...';
+            btn.disabled = true;
+
+            try {
+                // Fetch the invitation HTML
+                const response = await fetch(window.location.origin + "/invitacion/" + hashId + "/");
+                const htmlText = await response.text();
+
+                // Create a hidden iframe to render it
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.width = '600px';
+                iframe.style.height = '800px';
+                iframe.style.top = '-9999px';
+                iframe.style.left = '-9999px';
+                document.body.appendChild(iframe);
+
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(htmlText);
+                iframe.contentDocument.close();
+
+                // Wait for iframe resources (images, fonts) to load
+                await new Promise(resolve => {
+                    iframe.onload = () => {
+                        setTimeout(resolve, 500); // Give it a little extra time for the font/css to settle
+                    };
+                });
+
+                const card = iframe.contentDocument.getElementById('invitation-card');
+
+                if (!card) {
+                    throw new Error("No se pudo encontrar la tarjeta en la invitación.");
+                }
+
+                // Generate canvas
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: null,
+                    windowWidth: 600
+                });
+
+                // Clean up iframe
+                document.body.removeChild(iframe);
+
+                // Copy to clipboard
+                canvas.toBlob(async function(blob) {
+                    try {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        await navigator.clipboard.write([item]);
+
+                        // Open WhatsApp Web
+                        const url = "https://wa.me/" + telefono;
+                        window.open(url, '_blank');
+
+                        setTimeout(() => {
+                            alert("¡Imagen copiada al portapapeles!\n\nSe ha abierto WhatsApp. Solo presiona 'Pegar' (Ctrl+V) en el chat para enviar la imagen.");
+                        }, 500);
+
+                    } catch (err) {
+                        console.error("Error al copiar al portapapeles:", err);
+                        alert("No se pudo copiar la imagen al portapapeles automáticamente. Tu navegador podría no soportar esta función. \n\nIntenta descargar la imagen desde la vista de Invitación.");
+                    } finally {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                }, "image/png");
+
+            } catch (error) {
+                console.error(error);
+                alert("Error al generar la imagen de la invitación.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
         }
     </script>
