@@ -3,6 +3,8 @@
 {% block title %}Registro de Asistencia - Asistencia QR{% endblock %}
 
 {% block extra_head %}
+<!-- html2canvas for image generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
     /* Estilos específicos para impresión */
     @media print {
@@ -99,6 +101,10 @@
                         <a href="{% url 'invitacion' hash_id=hash_id %}" target="_blank" class="flex-1 w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2 mt-2">
                             <i class="fas fa-file-pdf"></i> Ver Invitación PDF
                         </a>
+
+                        <button type="button" onclick="sendWhatsAppInvitacion('{{ telefono|default_if_none:"" }}', '{{ nombre|escapejs }}', '{{ hash_id }}')" class="flex-1 w-full text-white px-4 py-3 rounded-lg font-medium transition duration-300 shadow-sm text-sm flex items-center justify-center gap-2 mt-2" style="background-color: #25D366;">
+                            <i class="fab fa-whatsapp text-lg"></i> Enviar WhatsApp
+                        </button>
                     </div>
                 </div>
             {% else %}
@@ -120,5 +126,104 @@
                 input.classList.add('dark:bg-gray-700', 'dark:border-gray-600', 'dark:placeholder-gray-400', 'dark:text-white', 'dark:focus:ring-blue-500', 'dark:focus:border-blue-500');
             });
         });
+
+        async function sendWhatsAppInvitacion(telefonoRegistrado, nombre, hashId) {
+            let telefono = telefonoRegistrado;
+
+            if (telefono) {
+                telefono = telefono.replace(/[^0-9+]/g, '');
+            }
+
+            if (!telefono) {
+                telefono = prompt("Por favor, ingresa el número de teléfono (incluyendo el código de país, ej. +51...):");
+                if (!telefono) {
+                    alert("Envío cancelado. Se requiere un número de teléfono.");
+                    return;
+                }
+                telefono = telefono.replace(/[^0-9+]/g, '');
+            }
+
+            if (!confirm(`¿Deseas generar y enviar la imagen de la invitación a ${nombre} por WhatsApp? \n\nEl sistema copiará la imagen al portapapeles y abrirá WhatsApp. Solo tendrás que pegar (Ctrl+V) la imagen en el chat y enviar.`)) {
+                return;
+            }
+
+            // The button triggering this
+            let btn = event.currentTarget;
+            let originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin text-lg"></i> Generando...';
+            btn.disabled = true;
+
+            try {
+                // Fetch the invitation HTML
+                const response = await fetch(window.location.origin + "/invitacion/" + hashId + "/");
+                const htmlText = await response.text();
+
+                // Create a hidden iframe to render it
+                const iframe = document.createElement('iframe');
+                iframe.style.position = 'absolute';
+                iframe.style.width = '600px';
+                iframe.style.height = '800px';
+                iframe.style.top = '-9999px';
+                iframe.style.left = '-9999px';
+                document.body.appendChild(iframe);
+
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(htmlText);
+                iframe.contentDocument.close();
+
+                // Wait for iframe resources (images, fonts) to load
+                await new Promise(resolve => {
+                    iframe.onload = () => {
+                        setTimeout(resolve, 500); // Give it a little extra time for the font/css to settle
+                    };
+                });
+
+                const card = iframe.contentDocument.getElementById('invitation-card');
+
+                if (!card) {
+                    throw new Error("No se pudo encontrar la tarjeta en la invitación.");
+                }
+
+                // Generate canvas
+                const canvas = await html2canvas(card, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: null,
+                    windowWidth: 600
+                });
+
+                // Clean up iframe
+                document.body.removeChild(iframe);
+
+                // Copy to clipboard
+                canvas.toBlob(async function(blob) {
+                    try {
+                        const item = new ClipboardItem({ "image/png": blob });
+                        await navigator.clipboard.write([item]);
+
+                        // Open WhatsApp Web
+                        const url = "https://wa.me/" + telefono;
+                        window.open(url, '_blank');
+
+                        setTimeout(() => {
+                            alert("¡Imagen copiada al portapapeles!\n\nSe ha abierto WhatsApp. Solo presiona 'Pegar' (Ctrl+V) en el chat para enviar la imagen.");
+                        }, 500);
+
+                    } catch (err) {
+                        console.error("Error al copiar al portapapeles:", err);
+                        alert("No se pudo copiar la imagen al portapapeles automáticamente. Tu navegador podría no soportar esta función. \n\nIntenta descargar la imagen desde la vista de Invitación.");
+                    } finally {
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                }, "image/png");
+
+            } catch (error) {
+                console.error(error);
+                alert("Error al generar la imagen de la invitación.");
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
     </script>
 {% endblock %}

@@ -11,6 +11,7 @@ class Asistencia(models.Model):
     nombre = models.CharField(max_length=100, verbose_name="Nombre", blank=True, null=True)
     apellido = models.CharField(max_length=100, verbose_name="Apellido", blank=True, null=True)
     documento = models.CharField(max_length=20, verbose_name="Documento", blank=True, null=True)
+    telefono = models.CharField(max_length=20, verbose_name="Teléfono Celular", blank=True, null=True)
     
     # time_entry BIGINT NOT NULL
     time_entry = models.BigIntegerField(default=0, verbose_name="Hora de Entrada (Unix)")

@@ -5,13 +5,19 @@ import pytz
 from django.conf import settings
 from .models import Asistencia
 
+from django.urls import reverse
+import urllib.parse
+
 @admin.register(Asistencia)
 class AsistenciaAdmin(admin.ModelAdmin):
     # Campos a mostrar en la lista
-    list_display = ('get_nombre_completo', 'get_documento', 'get_hora_entrada', 'get_hora_salida', 'get_duracion')
+    list_display = ('get_nombre_completo', 'get_documento', 'telefono', 'get_hora_entrada', 'get_hora_salida', 'get_duracion', 'enviar_whatsapp')
     
     # Campos por los que se puede buscar
-    search_fields = ('nombre', 'apellido', 'documento', 'id_hash')
+    search_fields = ('nombre', 'apellido', 'documento', 'telefono', 'id_hash')
+
+    # Permitir edición rápida del teléfono
+    list_editable = ('telefono',)
     
     # Filtros laterales
     list_filter = ('time_entry', 'time_exit')
@@ -65,3 +71,31 @@ class AsistenciaAdmin(admin.ModelAdmin):
             return format_html('<span style="color:green;">En curso...</span>')
         return "-"
     get_duracion.short_description = "Duración Estancia"
+
+    def enviar_whatsapp(self, obj):
+        nombre = f"{obj.nombre} {obj.apellido}".strip() if obj.nombre else "Invitado"
+
+        # Guardamos datos en atributos data-* para que el JS los use
+        telefono = obj.telefono if obj.telefono else ""
+        hash_id = obj.id_hash
+
+        return format_html(
+            '''
+            <button type="button"
+                    class="button"
+                    style="background-color: #25D366; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;"
+                    onclick="sendWhatsApp(this)"
+                    data-telefono="{}"
+                    data-nombre="{}"
+                    data-hash="{}">
+                Enviar WhatsApp
+            </button>
+            ''',
+            telefono,
+            nombre,
+            hash_id
+        )
+    enviar_whatsapp.short_description = "Invitación"
+
+    class Media:
+        js = ('admin/js/whatsapp_sender.js',)

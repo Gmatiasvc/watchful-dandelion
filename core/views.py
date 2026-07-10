@@ -59,6 +59,7 @@ def registro_view(request):
     qr_image_base64 = None
     hash_generado = None
     nombre_completo = None
+    telefono_registrado = None
 
     if request.method == 'POST':
         form = RegistroPersonaForm(request.POST)
@@ -66,6 +67,7 @@ def registro_view(request):
             nombre = form.cleaned_data['nombre']
             apellido = form.cleaned_data['apellido']
             documento = form.cleaned_data['documento']
+            telefono = form.cleaned_data.get('telefono', '')
             
             # 1. Generar Hash
             hash_id = generar_hash(nombre, apellido, documento)
@@ -79,15 +81,24 @@ def registro_view(request):
                     'time_exit': 0,
                     'nombre': nombre,
                     'apellido': apellido,
-                    'documento': documento
+                    'documento': documento,
+                    'telefono': telefono
                 }
             )
 
-            # Si ya existía pero no tenía los datos personales (registros antiguos), los actualizamos
-            if not created and (not obj.nombre or not obj.documento):
+            # Actualizar datos si es necesario (ya sea antiguos sin nombre o actualizar el teléfono)
+            actualizar = False
+            if not obj.nombre or not obj.documento:
                 obj.nombre = nombre
                 obj.apellido = apellido
                 obj.documento = documento
+                actualizar = True
+
+            if telefono and obj.telefono != telefono:
+                obj.telefono = telefono
+                actualizar = True
+
+            if actualizar and not created:
                 obj.save()
 
             if created:
@@ -113,6 +124,7 @@ def registro_view(request):
             
             hash_generado = hash_id
             nombre_completo = f"{nombre} {apellido}"
+            telefono_registrado = telefono
 
     else:
         form = RegistroPersonaForm()
@@ -121,7 +133,8 @@ def registro_view(request):
         'form': form,
         'qr_image': qr_image_base64,
         'hash_id': hash_generado,
-        'nombre': nombre_completo
+        'nombre': nombre_completo,
+        'telefono': telefono_registrado
     })
 
 def lector_view(request):
@@ -218,6 +231,32 @@ def procesar_qr(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
     
+    return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
+
+@csrf_exempt
+def actualizar_telefono(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            hash_id = data.get('hash_id')
+            nuevo_telefono = data.get('telefono', '')
+
+            if not hash_id:
+                return JsonResponse({'status': 'error', 'message': 'Hash no proporcionado'}, status=400)
+
+            registro = Asistencia.objects.get(id_hash=hash_id)
+            registro.telefono = nuevo_telefono
+            registro.save()
+
+            return JsonResponse({'status': 'success', 'telefono': nuevo_telefono})
+
+        except Asistencia.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Usuario no encontrado'}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'error', 'message': 'JSON inválido'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
     return JsonResponse({'status': 'error', 'message': 'Método no permitido'}, status=405)
 
 def invitacion_view(request, hash_id):
